@@ -1,0 +1,238 @@
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
+import { server } from '../../constant/api'
+import { 
+  FaUser, 
+  FaEnvelope, 
+  FaPhone, 
+  FaCalendarAlt, 
+  FaFilePdf, 
+  FaMapMarkerAlt, 
+  FaGraduationCap,
+  FaBriefcase,
+  FaMoneyBillWave,
+  FaChevronLeft,
+  FaChevronRight,
+  FaEye
+} from 'react-icons/fa'
+import Layout from '../../layout/Layout'
+import { Link } from 'react-router-dom'
+
+const AllCandidate = () => {
+  const [data, setData] = useState({
+    candidates: [],
+    totalNumberOfCandidate: 0,
+    currentPage: 1,
+    totalPage: 1,
+    loading: true,
+    error: null
+  })
+
+  const fetchCandidates = async (page = 1) => {
+    try {
+      setData(prev => ({ ...prev, loading: true }))
+      const response = await axios.get(`${server}/allCandidates?page=${page}`, { withCredentials: true })
+      setData({
+        candidates: response.data.candidate,
+        totalNumberOfCandidate: response.data.totalNumberOfCandidate,
+        currentPage: response.data.currentPage,
+        totalPage: response.data.totalPage,
+        loading: false,
+        error: null
+      })
+    } catch (error) {
+      setData(prev => ({
+        ...prev,
+        loading: false,
+        error: error.response?.data?.message || 'Failed to fetch candidates'
+      }))
+    }
+  }
+
+  useEffect(() => {
+    fetchCandidates()
+  }, [])
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 1 && newPage <= data.totalPage) {
+      fetchCandidates(newPage)
+    }
+  }
+
+  if (data.loading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        </div>
+      </Layout>
+    )
+  }
+
+  if (data.error) {
+    return (
+      <Layout>
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative max-w-2xl mx-auto mt-8" role="alert">
+          <strong className="font-bold">Error! </strong>
+          <span className="block sm:inline">{data.error}</span>
+        </div>
+      </Layout>
+    )
+  }
+
+  return (
+    <Layout>
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">All Candidates</h1>
+          <p className="text-gray-600">
+            Showing {data.candidates.length} of {data.totalNumberOfCandidate} candidates
+          </p>
+        </div>
+
+        {data.candidates.length === 0 ? (
+          <div className="bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded relative max-w-2xl mx-auto">
+            No candidates found
+          </div>
+        ) : (
+          <>
+            <div className="overflow-x-auto bg-white rounded-lg shadow">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Candidate
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Contact
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Education
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Experience
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Payment
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {data.candidates.map(candidate => (
+                    <tr key={candidate._id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10">
+                            <img 
+                              className="h-10 w-10 rounded-full object-cover" 
+                              src={candidate.profilePicUrl || 'https://via.placeholder.com/150'} 
+                              alt={candidate.fullName} 
+                            />
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">{candidate.fullName}</div>
+                            <div className="text-sm text-gray-500">{candidate.location}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 flex items-center">
+                          <FaEnvelope className="mr-2 text-indigo-500" />
+                          {candidate.email}
+                        </div>
+                        <div className="text-sm text-gray-500 flex items-center mt-1">
+                          <FaPhone className="mr-2 text-indigo-500" />
+                          {candidate.phone}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 flex items-center">
+                          <FaGraduationCap className="mr-2 text-indigo-500" />
+                          {candidate.qualification}
+                        </div>
+                        <div className="text-sm text-gray-500 flex items-center mt-1">
+                          <FaCalendarAlt className="mr-2 text-indigo-500" />
+                          {new Date(candidate.dob).toLocaleDateString()}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 flex items-center">
+                          <FaBriefcase className="mr-2 text-indigo-500" />
+                          {candidate.experience}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${candidate.paymentStatus === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {candidate.paymentStatus}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex space-x-2">
+                          <Link
+                            to={`/admin/candidates/${candidate._id}`}
+                            className="text-indigo-600 hover:text-indigo-900 flex items-center"
+                          >
+                            <FaEye className="mr-1" /> View
+                          </Link>
+                          {candidate.resumeUrl && (
+                            <a
+                              href={candidate.resumeUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-indigo-600 hover:text-indigo-900 flex items-center"
+                            >
+                              <FaFilePdf className="mr-1" /> Resume
+                            </a>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {data.totalPage > 1 && (
+              <div className="flex items-center justify-between mt-4">
+                <div className="text-sm text-gray-700">
+                  Showing page <span className="font-medium">{data.currentPage}</span> of <span className="font-medium">{data.totalPage}</span>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handlePageChange(data.currentPage - 1)}
+                    disabled={data.currentPage === 1}
+                    className={`px-3 py-1 rounded-md ${data.currentPage === 1 ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
+                  >
+                    <FaChevronLeft />
+                  </button>
+                  {Array.from({ length: data.totalPage }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-3 py-1 rounded-md ${data.currentPage === page ? 'bg-indigo-600 text-white' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => handlePageChange(data.currentPage + 1)}
+                    disabled={data.currentPage === data.totalPage}
+                    className={`px-3 py-1 rounded-md ${data.currentPage === data.totalPage ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-300'}`}
+                  >
+                    <FaChevronRight />
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </Layout>
+  )
+}
+
+export default AllCandidate
